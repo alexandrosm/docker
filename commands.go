@@ -303,6 +303,8 @@ func (cli *DockerCli) CmdLogin(args ...string) error {
 		return nil
 	}
 
+	cli.LoadConfigFile()
+
 	var oldState *term.State
 	if *flUsername == "" || *flPassword == "" || *flEmail == "" {
 		oldState, err = term.SetRawTerminal(cli.terminalFd)
@@ -498,6 +500,7 @@ func (cli *DockerCli) CmdInfo(args ...string) error {
 	}
 
 	if len(out.IndexServerAddress) != 0 {
+		cli.LoadConfigFile()
 		u := cli.configFile.Configs[out.IndexServerAddress].Username
 		if len(u) > 0 {
 			fmt.Fprintf(cli.out, "Username: %v\n", u)
@@ -845,6 +848,8 @@ func (cli *DockerCli) CmdPush(args ...string) error {
 	if len(strings.SplitN(name, "/", 2)) == 1 {
 		return fmt.Errorf("Impossible to push a \"root\" repository. Please rename your repository in <user>/<repo> (ex: %s/%s)", cli.configFile.Configs[auth.IndexServerAddress()].Username, name)
 	}
+
+	cli.LoadConfigFile()
 
 	v := url.Values{}
 	push := func() error {
@@ -1745,6 +1750,14 @@ func Subcmd(name, signature, description string) *flag.FlagSet {
 	return flags
 }
 
+func (cli *DockerCli) LoadConfigFile() (err error) {
+	cli.configFile, err = auth.LoadConfig(os.Getenv("HOME"))
+	if err != nil {
+		fmt.Fprintf(cli.err, "WARNING: %s\n", err)
+	}
+	return err
+}
+
 func NewDockerCli(in io.ReadCloser, out, err io.Writer, proto, addr string) *DockerCli {
 	var (
 		isTerminal = false
@@ -1761,15 +1774,9 @@ func NewDockerCli(in io.ReadCloser, out, err io.Writer, proto, addr string) *Doc
 	if err == nil {
 		err = out
 	}
-
-	configFile, e := auth.LoadConfig(os.Getenv("HOME"))
-	if e != nil {
-		fmt.Fprintf(err, "WARNING: %s\n", e)
-	}
 	return &DockerCli{
 		proto:      proto,
 		addr:       addr,
-		configFile: configFile,
 		in:         in,
 		out:        out,
 		err:        err,
