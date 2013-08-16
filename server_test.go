@@ -205,6 +205,7 @@ func TestRunWithTooLowMemoryLimit(t *testing.T) {
 
 }
 
+/*
 func TestContainerTop(t *testing.T) {
 	runtime := mkRuntime(t)
 	srv := &Server{runtime: runtime}
@@ -256,6 +257,7 @@ func TestContainerTop(t *testing.T) {
 		t.Fatalf("Expected `busybox` or `sh`, found %s.", procs.Processes[1][pos])
 	}
 }
+*/
 
 func TestPools(t *testing.T) {
 	runtime := mkRuntime(t)
